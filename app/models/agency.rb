@@ -2,28 +2,47 @@
 #
 # Table name: agencies
 #
-#  id         :integer(4)      not null, primary key
-#  name       :string(255)
-#  created_at :datetime
-#  updated_at :datetime
-#  shortname  :string(255)
-#  info_url   :string(255)
+#  id              :integer          not null, primary key
+#  name            :string(255)
+#  created_at      :datetime
+#  updated_at      :datetime
+#  shortname       :string(255)
+#  info_url        :string(255)
+#  mongo_id        :string(255)
+#  parent_mongo_id :string(255)
+#  parent_id       :integer
 #
 
 class Agency < ActiveRecord::Base
-  attr_accessible :name, :shortname, :info_url, :agency_contact_ids
+  #handles logging of activity
+  include PublicActivity::Model
+  tracked owner: Proc.new{ |controller, model| controller.current_user }
+
+  #handles versioning
+  has_paper_trail
+  #attr_accessible :name, :shortname, :info_url, :agency_contact_ids
   
   has_many :sponsorships
   has_many :outlets, :through => :sponsorships
   has_many :agency_contacts
   
-  validates :name, :presence => true
-  validates :shortname, :presence => true
+  has_many :users
   
-  paginates_per 200
+  belongs_to :parent, :class_name => "Agency" 
+  has_many :children, :foreign_key => "parent_id", :class_name => "Agency"
 
-  def to_s
-    self.name
+  validates :name, :presence => true
+  # validates :shortname, :presence => true
+  
+  paginates_per 100
+
+  def self.to_csv(options = {})
+    CSV.generate(options) do |csv|
+      csv << column_names
+      all.each do |agency|
+        csv << agency.attributes.values_at(*column_names)
+      end
+    end
   end
   
   def contact_emails(options = {})
@@ -49,4 +68,9 @@ class Agency < ActiveRecord::Base
   def outlets_count_key
     "agency/#{id}/outlets_count"
   end
+
+  def history
+    @versions = PaperTrail::Agencies.order('created_at DESC')
+  end
+
 end

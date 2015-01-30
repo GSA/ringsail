@@ -2,7 +2,7 @@
 #
 # Table name: outlets
 #
-#  id            :integer(4)      not null, primary key
+#  id            :integer          not null, primary key
 #  service_url   :string(255)
 #  organization  :string(255)
 #  info_url      :string(255)
@@ -12,8 +12,9 @@
 #  created_at    :datetime
 #  updated_at    :datetime
 #  service       :string(255)
-#  location_id   :integer(4)
+#  location_id   :integer
 #  location_name :string(255)
+#  status        :integer          default(0)
 #
 
 require 'spec_helper'

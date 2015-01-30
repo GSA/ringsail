@@ -4,6 +4,24 @@ class Service
     @uri = URI.parse(service_url)
   end
 
+  def self.find_by_shortname(shortname)
+    found_service = nil
+    self.all.each do |service|
+      found_service = service if service.shortname.to_s == shortname.to_s
+      puts service.shortname
+      puts shortname
+    end
+    found_service
+  end
+
+  def self.search_by_name(query)
+    services = []
+    self.all.each do |service|
+      services << service if service.shortname.to_s.downcase.include? query
+    end
+    services
+  end
+
   ## class methods
 
   def self.register(name, subclass)

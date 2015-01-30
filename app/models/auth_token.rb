@@ -2,20 +2,20 @@
 #
 # Table name: auth_tokens
 #
-#  id           :integer(4)      not null, primary key
+#  id           :integer          not null, primary key
 #  token        :string(255)
 #  email        :string(255)
 #  phone        :string(255)
-#  admin        :boolean(1)
-#  access_count :integer(4)
+#  admin        :boolean
+#  access_count :integer
 #  created_at   :datetime
 #  updated_at   :datetime
-#  duration     :string(255)     default("short")
+#  duration     :string(255)      default("short")
 #
 
 class AuthToken < ActiveRecord::Base
   include ActiveModel::Validations
-  attr_accessible :email, :phone
+  #ttr_accessible :email, :phone
   
   email_regex = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
   validates :email, :presence   => true, 

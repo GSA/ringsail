@@ -2,7 +2,7 @@
 #
 # Table name: outlets
 #
-#  id            :integer(4)      not null, primary key
+#  id            :integer          not null, primary key
 #  service_url   :string(255)
 #  organization  :string(255)
 #  info_url      :string(255)
@@ -12,18 +12,27 @@
 #  created_at    :datetime
 #  updated_at    :datetime
 #  service       :string(255)
-#  location_id   :integer(4)
+#  location_id   :integer
 #  location_name :string(255)
+#  status        :integer          default(0)
 #
 
 class Outlet < ActiveRecord::Base
-  attr_accessor :auth_token
-  attr_accessible :service_url, :organization, :info_url, :language, :account, :service, :auth_token, :agency_ids, :tag_list, :location_id, :location_name
+  #handles logging of activity
+  include PublicActivity::Model
+  tracked owner: Proc.new{ |controller, model| controller.current_user }
+  
+  enum status: { submitted: 0, active: 1, archived: 2 }
+  #handles versioning
+  #attr_accessor :auth_token
+  #attr_accessible :service_url, :organization, :info_url, :language, :account, :service, :auth_token, :agency_ids, :tag_list, :location_id, :location_name
 
   has_many :sponsorships
   has_many :agencies, :through => :sponsorships
 
   acts_as_taggable
+  
+  has_paper_trail 
   
   validates :service_url, 
     :presence   => true, 
@@ -36,13 +45,22 @@ class Outlet < ActiveRecord::Base
   validates :account, :presence => true
   validates :language, :presence => true
   
-  before_save :set_updated_by
+  # before_save :set_updated_by
   before_save :fix_service_info
   before_save :clear_agency_counts
   before_destroy :clear_agency_counts
   
   paginates_per 100
   
+  def self.to_csv(options = {})
+    CSV.generate(options) do |csv|
+      csv << column_names
+      all.each do |outlet|
+        csv << outlet.attributes.values_at(*column_names)
+      end
+    end
+  end
+
   def self.to_review
     where('outlets.updated_at < ?', 6.months.ago).order('outlets.updated_at')
   end
@@ -95,7 +113,19 @@ class Outlet < ActiveRecord::Base
       agency.contact_emails(:excluding => updated_by)
     end
   end
-    
+  
+  def history
+    @versions = PaperTrail::Outlets.order('created_at DESC')
+  end
+
+  def agency_tokens=(ids)
+    self.agency_ids = ids.split(",")
+  end
+
+  # will rely on replacing the tokens system, but CRUDing out the info for now
+  def tag_tokens=(ids)
+    self.tag_list = ids
+  end
   private
   
   def set_updated_by

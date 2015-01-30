@@ -2,7 +2,7 @@
 #
 # Table name: official_tags
 #
-#  id         :integer(4)      not null, primary key
+#  id         :integer          not null, primary key
 #  shortname  :string(255)
 #  tag_text   :string(255)
 #  created_at :datetime
@@ -10,7 +10,13 @@
 #
 
 class OfficialTag < ActiveRecord::Base
-  attr_accessible :shortname, :tag_text
+  #handles logging of activity
+  include PublicActivity::Model
+  tracked owner: Proc.new{ |controller, model| controller.current_user }
+
+  #handles versioning
+  has_paper_trail
+  #attr_accessible :shortname, :tag_text
   
   validates :tag_text, :presence => true
   validates :shortname, :presence => true, :uniqueness => true

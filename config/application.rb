@@ -2,13 +2,12 @@ require File.expand_path('../boot', __FILE__)
 
 secrets_file = File.expand_path('../too_many_secrets', __FILE__)
 require secrets_file if File.exists?(secrets_file + '.rb')
-
+require 'csv'
 require 'rails/all'
-require 'rack/jsonp'
 
 if defined?(Bundler)
   # If you precompile assets before deploying to production, use this line
-  Bundler.require(*Rails.groups(:assets => %w(development test)))
+  Bundler.require(*Rails.groups)
   # If you want your assets lazily compiled in production, use this line
   # Bundler.require(:default, :assets, Rails.env)
 end
@@ -49,11 +48,8 @@ module Ringsail
 
     # Version of your assets, change this if you want to expire all your assets
     config.assets.version = '1.0'
-    
-    # Allow API clients to use JSONP callbacks
-    config.middleware.use Rack::JSONP
-    
+        
     # Put compiled JS and CSS assets in a proxy-friendly path
-    config.assets.prefix = "/social-media/social-media-registry/accounts/assets"
+    #config.assets.prefix = "/social-media/social-media-registry/accounts/assets"
   end
 end
